@@ -1,0 +1,425 @@
+\documentclass[12pt, letterpaper]{article}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\title{HW2}
+\author{Kevin Smith}
+\date{October 2023}
+\begin{document}
+\maketitle
+\hspace{-.75cm} 
+
+\section{Executive Summary}
+
+In this report, we consider the LU-Decomposition of a matrix A in $ \mathbb{R}^{nxn}$. We will examine the different methods for finding this LU, including the use of different pivoting methods.
+
+\section{Statement of the Problem}
+
+The LU-Decomposition is often used in numerical mathematics as a way to approximate $x$ when $Ax=b$. This is useful whenever $A^{-1}$ is difficult to find. L is defined as a non-singular unit-lower triangular matrix and U is an upper triangular matrix. The process of transforming A into these matrices creates several errors, and can lead to approximated solutions $x$. In general these errors are introduced by,
+
+\begin{enumerate}
+   \item \textbf{Pivot Selection}: The choice of pivots is a critical aspect of GEM. If the pivot elements are poorly selected, such as very small values (close to zero) or very large values, it can lead to inaccuracies. Small pivot values can introduce numerical instability, and large pivot values may result in loss of precision. This can be exacerbated in computer-based computations due to finite precision arithmetic, resulting in round-off errors.
+
+   \item \textbf{Ill-Conditioned Matrices}: GEM can magnify the problems associated with ill-conditioned matrices. An ill-conditioned matrix has a high condition number, indicating that small changes in coefficients or constants can lead to significant changes in the solution. GEM might not effectively mitigate these issues, leading to approximated solutions that may not accurately represent the actual problem due to the inherent numerical instability.
+
+   \item \textbf{Round-off Errors}: Computer-based numerical computations rely on finite precision arithmetic. During the elimination process, round-off errors can accumulate. These errors result from the limitations in representing real numbers as floating-point values with a finite number of significant digits. When numerous arithmetic operations are performed, round-off errors can accumulate and affect the accuracy of the solution. This is especially problematic when dealing with matrices that have large condition numbers.
+
+\end{enumerate}
+
+
+
+
+
+\section{Description of the Algorithms and Implementation}
+
+U and L are both found using the Gauss elimination method (GEM). In general, GEM takes a matrix
+
+\[
+\begin{bmatrix}
+    a_{11} & a_{12} & \ldots & a_{1n} \\
+    a_{21} & a_{22} & \ldots & a_{2n} \\
+    \vdots & \vdots & \ddots & \vdots \\
+    a_{n1} & a_{n2} & \ldots & a_{nn} \\
+\end{bmatrix}
+\begin{bmatrix}
+    x_1 \\
+    x_2 \\
+    \vdots \\
+    x_n \\
+\end{bmatrix}
+=
+\begin{bmatrix}
+    b_1 \\
+    b_2 \\
+    \vdots \\
+    b_n \\
+\end{bmatrix}
+\]
+
+And reduces the lower off-diagonal elements into zero with several elementary row operations:
+
+\begin{enumerate}
+   \item Start with the first row (Row 1) and eliminate the coefficients below the first element ($a_{11}$) to create zeros in the off-diagonal positions. This is done by performing row operations on the subsequent rows as follows:
+   \begin{enumerate}
+       \item Scale Row 1 by a factor ($k$) and subtract it from the corresponding elements in Rows 2 through $n$ to create zeros:
+       \[
+       \begin{aligned}
+           R_2 &\leftarrow R_2 - kR_1 \\
+           R_3 &\leftarrow R_3 - kR_1 \\
+           \vdots \\
+           R_n &\leftarrow R_n - kR_1
+       \end{aligned}
+       \]
+   \end{enumerate}
+
+   \item Move to the second row (Row 2) and create zeros below the second element ($a_{22}$) by performing similar row operations on the subsequent rows:
+   \begin{enumerate}
+       \item Scale Row 2 by a factor ($k$) and subtract it from the corresponding elements in Rows 3 through $n$:
+       \[
+       \begin{aligned}
+           R_3 &\leftarrow R_3 - kR_2 \\
+           \vdots \\
+           R_n &\leftarrow R_n - kR_2
+       \end{aligned}
+       \]
+   \end{enumerate}
+   \item Continue this process, moving from Row 3 to Row $n-1$, creating zeros in the off-diagonal elements of each row.
+
+    \item Once you reach the last row (Row $n-1$), the matrix will be in upper triangular form with zeros in the off-diagonal elements. You can then proceed to solve the system of equations by back-substitution.
+
+
+\end{enumerate}
+
+This upper diagonal matrix is the U of the LU-decomposition. L is found by performing the same operations on $I^{nxn}$. Using both L $\&$ U, you solve the following equations:
+\begin{enumerate}
+   \item $Ly=b$
+   \item $Uy=x$
+\end{enumerate}
+
+To perform these operations, I used Python as well as the math and random packages within. I generated matrices of size n=200 and n=20 with elements ranging from [-100,100]. I used the following alogrithms to generate the matrix A
+\begin{enumerate}
+   \item generate\_spd\_matrix(n)
+   
+         This created a matrix that was symmetric, by ensuring $A_{i,j}$ = $A_{j,i}$. And ensured positive definiteness by adding the size of the matrix to the diagonal entries, creating diagonal dominance.
+
+   \item generate\_diagonally\_dominant\_matrix(n)
+   
+         This created a diagonally dominant matrix, finding the row sum and adding it to the diagonal entries.
+
+\end{enumerate}
+
+I also used several functions to solve the matrix depending on the pivoting technique being used.
+
+\begin{enumerate}
+   \item lu\_decomposition\_partial\_pivot(A)
+   \item lu\_decomposition\_complete\_pivot(A)
+   \item lu\_decomposition\_no\_pivot(A)
+\end{enumerate}
+
+All of these functions returned the permutation matrices P,Q as well as the LU decomposition which was performed with the in-place algorithm strategy.
+
+To test my algorithm, I used a test matrix A and test vector b:
+
+\begin{align*}
+   A &= \begin{bmatrix}
+   2 & 1 & 0 \\
+   -4 & 0 & 4 \\
+   2 & 5 & -10 \\
+   \end{bmatrix}
+   \\
+   b &= \begin{bmatrix}
+   3 \\
+   0 \\
+   17 \\
+   \end{bmatrix}
+\end{align*}
+
+I found the LU decomposition with partial pivoting as:
+
+\begin{minipage}{0.3\textwidth}
+   \centering
+   Matrix $LU$:
+   \[
+   A = \begin{bmatrix}
+   -4 & 0 & 4 \\
+   -0.5 & 5.0 & -8.0 \\
+   -0.5 & 0.2 & 3.6 \\
+   \end{bmatrix}
+   \]
+\end{minipage}
+\hfill
+\begin{minipage}{0.3\textwidth}
+   \centering
+   Permutation Vector $P$:
+   \[
+   P = \begin{bmatrix}
+   1 \\
+   2 \\
+   0 \\
+   \end{bmatrix}
+   \]
+\end{minipage}
+\hfill
+\begin{minipage}{0.3\textwidth}
+   \centering
+   Solution Vector $x$:
+   \[
+   x = \begin{bmatrix}
+   -0.1111 \\
+   3.2222 \\
+   -0.1111 \\
+   \end{bmatrix}
+   \]
+\end{minipage}
+
+And with complete pivoting as:
+
+\begin{minipage}{0.3\textwidth}
+   \centering
+   Matrix $A$:
+   \[
+   A = \begin{bmatrix}
+   2 & 5 & -10 \\
+   -2.0 & 10.0 & -16.0 \\
+   1.0 & -0.4 & 3.59 \\
+   \end{bmatrix}
+   \]
+\end{minipage}
+\hfill
+\begin{minipage}{0.2\textwidth}
+   \centering
+   Permutation Vector $P$:
+   \[
+   P = \begin{bmatrix}
+   2 \\
+   1 \\
+   0 \\
+   \end{bmatrix}
+   \]
+\end{minipage}
+\hfill
+\begin{minipage}{0.2\textwidth}
+   \centering
+   Permutation Vector $Q$:
+   \[
+   Q = \begin{bmatrix}
+   2 \\
+   0 \\
+   1 \\
+   \end{bmatrix}
+   \]
+\end{minipage}
+\hfill
+\begin{minipage}{0.3\textwidth}
+   \centering
+   Solution Vector $x$:
+   \[
+   x = \begin{bmatrix}
+   -0.11111111111111083 \\
+   3.2222222222222228 \\
+   -0.11111111111111073 \\
+   \end{bmatrix}
+   \]
+\end{minipage}
+
+Which verifies that my algorithm is computing correctly.
+
+
+\section{Description of the Experimental Design and Results}
+
+I began by generating the A, as well as x. This allowed me to directly find b in order to best examine the accuracy of our results. I then began implementing my algorithm with different types of pivoting with the two different n's mentioned above. I performed error analysis using these conditions on SPD matrices as well as diagonally dominant matrices.
+I performed LU decompositions with each different method ten times and found the average of each error.
+
+I found that in general, the factorization error ($\frac{||PAQ-LU||}{||A||}$) was 0 for all cases except for when a pivoting technique was used. While the pivoting did not lead to the exact factorization, it did lead to a more accurate prediction of x. This could come from the fact that pivoting helps prevent the diagonal entries of our matrix from becoming less than one. This prevents larger errors in rounding.
+The disparity between the errors of SPD and diagonally dominant can easily be explained by examining the condition numbers of both matrices prior to factorization. The SPD matrices I have generated have a much higher condition number than the diagonally dominant matrices. This suggests that the matrix has a higher sensitivity to changes in our data. In fact, I observed that my generated SPD matrices have a much more inconsistent condition number compared to the diagonally dominant matrix. This may be generating by the larger diagonal entries being generated in generate\_diagonal\_dominant\_matrix.
+
+It can also be observed that the complete pivoting of a matrix created much higher relative errors in x ($\frac{||x-\tilde{x}||}{||x||}$) compared to the other pivoting techniques. I believe this may be caused by round off errors, as there are many more operations being performed on the matrices, leading to the entries in our factorization being inaccurate; creating an inaccurate x.
+All of the errors become larger as the size of the matrix increases, this likely occurs for the same reason as the errors coming from complete pivoting. More operations leads to more errors because of roundoff. 
+
+The residual errors (($\frac{||b-A\tilde{x}||}{||b||}$)) followed the same general trends as the relative error in x. with lower errors in smaller diagonally-dominant matrices.
+
+I have compiled a table containing the errors I calculated in section 6.
+
+\section{Conclusions}
+
+Our results indicate that the LU-factorization is an effective way to compute x in $Ax=b$. While there are obvious inaccuracies generated from using numerical methods, the results are within a good margin of error. These methods can of course be made better by fine tuning the algorithm, including increasing the number of iterations and changing the matrix A in order for it to be more easily transformed using GEM. 
+The results also indicate that the diagonally-dominant matrix is by far more accurate in terms of numerics. This is simply due to the fact that SPD matrices are much more sensitive to changes in the data. Pivoting techniques, while decreasing the factorization accuracy, increase the accuracy of the result x due to it ensuring that the matrices diagonal entries are no smaller than 1 which could lead to much larger numbers when division is applied.
+LU-factorization is extremely useful in the case where the inverse of A is not easily found, like when n is large.
+
+
+\section{Tables and Figures}
+
+% Please add the following required packages to your document preamble:
+% \usepackage{graphicx}
+
+\begin{table}[h]
+    \centering
+    \scalebox{0.5}{
+    \makebox[\linewidth]{
+    \begin{tabular}{llllllll}
+    \cline{1-7}
+    \multicolumn{7}{|l|}{n=200, Diagonally Dominant Matrix} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{Pivot type} &
+      \multicolumn{1}{l|}{Factorization Error using 1 norm} &
+      \multicolumn{1}{l|}{Factorization Error using Forbenius norm} &
+      \multicolumn{1}{l|}{Relative Error in x using one norm} &
+      \multicolumn{1}{l|}{Relative Error in x using two norm} &
+      \multicolumn{1}{l|}{Residual Error using one norm} &
+      \multicolumn{1}{l|}{Residual Error using two norm} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{none} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{0.9999718434} &
+      \multicolumn{1}{l|}{1.000129124} &
+      \multicolumn{1}{l|}{0.05040638598} &
+      \multicolumn{1}{l|}{0.05718624956} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{partial} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{0.9990848695} &
+      \multicolumn{1}{l|}{0.9992198423} &
+      \multicolumn{1}{l|}{0.04902267378} &
+      \multicolumn{1}{l|}{0.0568578946144245} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{complete} &
+      \multicolumn{1}{l|}{1.002092216} &
+      \multicolumn{1}{l|}{1.414083122} &
+      \multicolumn{1}{l|}{784.9406701} &
+      \multicolumn{1}{l|}{2736.440316} &
+      \multicolumn{1}{l|}{561.6474883} &
+      \multicolumn{1}{l|}{695.2160883} &
+       \\ \cline{1-7}
+    \multicolumn{1}{c}{} &
+      \multicolumn{1}{c}{} &
+      \multicolumn{1}{c}{} &
+      \multicolumn{1}{c}{} &
+      \multicolumn{1}{c}{} &
+      \multicolumn{1}{c}{} &
+      \multicolumn{1}{c}{} &
+       \\ \cline{1-7}
+    \multicolumn{7}{|l|}{n=200, SPD Matrix} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{Pivot type} &
+      \multicolumn{1}{l|}{Factorization Error using 1 norm} &
+      \multicolumn{1}{l|}{Factorization Error using Forbenius norm} &
+      \multicolumn{1}{l|}{Relative Error in x using one norm} &
+      \multicolumn{1}{l|}{Relative Error in x using two norm} &
+      \multicolumn{1}{l|}{Residual Error using one norm} &
+      \multicolumn{1}{l|}{Residual Error using two norm} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{none} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{7475.86578} &
+      \multicolumn{1}{l|}{8012.510022} &
+      \multicolumn{1}{l|}{117.4651873} &
+      \multicolumn{1}{l|}{57.20988322} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{partial} &
+      \multicolumn{1}{l|}{1.504686569} &
+      \multicolumn{1}{l|}{1.401987044} &
+      \multicolumn{1}{l|}{84.23030016} &
+      \multicolumn{1}{l|}{92.36156426} &
+      \multicolumn{1}{l|}{4.843635484} &
+      \multicolumn{1}{l|}{5.07980626} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{complete} &
+      \multicolumn{1}{l|}{1.43901541} &
+      \multicolumn{1}{l|}{1.414662742} &
+      \multicolumn{1}{l|}{6965.047432} &
+      \multicolumn{1}{l|}{7444.051585} &
+      \multicolumn{1}{l|}{230.6371116} &
+      \multicolumn{1}{l|}{230.4742387} &
+       \\ \cline{1-7}
+     &
+       &
+       &
+       &
+       &
+       &
+       &
+       \\ \cline{1-7}
+    \multicolumn{7}{|l|}{n=20, Diagonally Dominant Matrix} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{Pivot type} &
+      \multicolumn{1}{l|}{Factorization Error using 1 norm} &
+      \multicolumn{1}{l|}{Factorization Error using Forbenius norm} &
+      \multicolumn{1}{l|}{Relative Error in x using one norm} &
+      \multicolumn{1}{l|}{Relative Error in x using two norm} &
+      \multicolumn{1}{l|}{Residual Error using one norm} &
+      \multicolumn{1}{l|}{Residual Error using two norm} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{none} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{1.012871891} &
+      \multicolumn{1}{l|}{1.019952924} &
+      \multicolumn{1}{l|}{0.1511537736} &
+      \multicolumn{1}{l|}{0.1754739127} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{partial} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{1.033636718} &
+      \multicolumn{1}{l|}{1.040320075} &
+      \multicolumn{1}{l|}{0.1765277698} &
+      \multicolumn{1}{l|}{0.1998665883} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{complete} &
+      \multicolumn{1}{l|}{1.010065138} &
+      \multicolumn{1}{l|}{1.412042316} &
+      \multicolumn{1}{l|}{80.37665578} &
+      \multicolumn{1}{l|}{159.8089866} &
+      \multicolumn{1}{l|}{298.7922459} &
+      \multicolumn{1}{l|}{326.6313241} &
+       \\ \cline{1-7}
+     &
+       &
+       &
+       &
+       &
+       &
+       &
+       \\ \cline{1-7}
+    \multicolumn{7}{|l|}{n=20, SPD Matrix} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{Pivot type} &
+      \multicolumn{1}{l|}{Factorization Error using 1 norm} &
+      \multicolumn{1}{l|}{Factorization Error using Forbenius norm} &
+      \multicolumn{1}{l|}{Relative Error in x using one norm} &
+      \multicolumn{1}{l|}{Relative Error in x using two norm} &
+      \multicolumn{1}{l|}{Residual Error using one norm} &
+      \multicolumn{1}{l|}{Residual Error using two norm} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{none} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{0} &
+      \multicolumn{1}{l|}{109.6928502} &
+      \multicolumn{1}{l|}{109.9773577} &
+      \multicolumn{1}{l|}{13.88771516} &
+      \multicolumn{1}{l|}{14.40261874} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{partial} &
+      \multicolumn{1}{l|}{1.436147137} &
+      \multicolumn{1}{l|}{1.376916629} &
+      \multicolumn{1}{l|}{6.252133736} &
+      \multicolumn{1}{l|}{6.73427537} &
+      \multicolumn{1}{l|}{2.381155848} &
+      \multicolumn{1}{l|}{2.319181796} &
+       \\ \cline{1-7}
+    \multicolumn{1}{|l|}{complete} &
+      \multicolumn{1}{l|}{1.260150448} &
+      \multicolumn{1}{l|}{1.412234866} &
+      \multicolumn{1}{l|}{247.6277868} &
+      \multicolumn{1}{l|}{251.8568198} &
+      \multicolumn{1}{l|}{6.882763599} &
+      \multicolumn{1}{l|}{6.214888664} &
+       \\ \cline{1-7}
+    
+    \end{tabular}
+    }}
+    \end{table}
+\end{document}
